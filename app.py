@@ -16,7 +16,7 @@ from osgeo import gdal
 import os
 
 
-app = FastAPI(title="Tititler server with Slope Algorithm")
+app = FastAPI(title="Tititler server with custom Algorithms")
 app = FastAPI()
 origins = [
     "http://localhost:5500",

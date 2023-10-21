@@ -1,22 +1,11 @@
-"""algos.
-
-app/algorithms.py
-
-# """
+from typing import  Callable
+from typing import Callable
+from titiler.core.algorithm import algorithms as default_algorithms
+from titiler.core.factory import TilerFactory
 from titiler.core.algorithm import BaseAlgorithm
 from titiler.core.algorithm import algorithms as default_algorithms
-
 from rio_tiler.models import ImageData
-
 import numpy as numpy
-from rasterio import windows
-
-
-"""algos.
-
-app/algorithms.py
-
-"""
 from titiler.core.algorithm import BaseAlgorithm
 from titiler.core.algorithm import algorithms as default_algorithms
 
@@ -33,7 +22,6 @@ class Slope(BaseAlgorithm):
         mask = img.mask
         bounds = img.bounds
         transform = img.transform
-        print(bounds,transform)
 
         # Calculate slope using the numpy gradient function
         x, y = numpy.gradient(data)
@@ -53,10 +41,39 @@ class Slope(BaseAlgorithm):
 
         return slope_imagedata
 
-# default_algorithms is a `titiler.core.algorithm.Algorithms` Object
+
+class Hyposometry(BaseAlgorithm):
+
+    #parameters
+    threshold: int 
+
+    #metadata
+    output_dtype: str = numpy.uint8
+
+    def __call__(self, img: ImageData) -> ImageData:
+
+        data = img.array[0]
+        mask =  numpy.logical_and(data >= 0, data < self.threshold)
+        masked_data = numpy.ma.masked_array(data - self.threshold, mask)
+        bounds = img.bounds
+
+        slope_imagedata = ImageData(
+            masked_data.astype(dtype=self.output_dtype), 
+            assets=img.assets,
+            crs=img.crs,
+            bounds=bounds,
+            )
+
+        return slope_imagedata
+
+
+
 algorithms = default_algorithms.register(
     {
         "slope": Slope,
+        "hyposometry":Hyposometry
     }
 )
 
+PostProcessParams: Callable = algorithms.dependency
+endpoints = TilerFactory(process_dependency=PostProcessParams)
